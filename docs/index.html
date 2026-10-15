@@ -50,11 +50,11 @@
   </div>
   <figure class="hero-shot">
     <div class="screen">
-      <img src="assets/img/workspace.png" width="480" height="320"
-           alt="480×320 桌面：菜单栏、下拉菜单、文档窗口、硬阴影、反白选区、滚动条、桌面图标">
+      <img src="assets/img/drag.gif" width="480" height="320"
+           alt="窗口被拖动的 73 帧动画，逐帧由 QuickDraw 引擎渲染">
     </div>
-    <figcaption data-en="Rendered by tools/render.c through the same src/*.c that runs on the S31. If the span XOR were wrong, this would show ghosting.">
-      由 tools/render.c 通过跑在 S31 上的同一份 src/*.c 画出。span XOR 算错的话，图上会有拖影。
+    <figcaption data-en="Not a screen recording. tools/replay.c drives a real drag through the engine and dumps all 73 frames; every one is the output of the same src/*.c that runs on the S31.">
+      这不是录屏。tools/replay.c 驱动一次真实的拖动，导出全部 73 帧，每一帧都是跑在 S31 上的同一份 src/*.c 的输出。
     </figcaption>
   </figure>
 </section>

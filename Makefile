@@ -12,7 +12,7 @@ LDFLAGS ?=
 CORE_SRC := src/qd_rop.c src/qd_region.c src/qd_expand.c
 CORE_OBJ := $(CORE_SRC:.c=.o)
 
-.PHONY: all test bench clean asan render
+.PHONY: all test bench clean asan render replay
 
 all: test bench
 
@@ -35,6 +35,18 @@ render: build/render
 build/render: tools/render.c tools/font5x7.c tools/font5x7.h $(CORE_SRC)
 	@mkdir -p build
 	$(CC) $(CFLAGS) -Itools -o $@ tools/render.c tools/font5x7.c $(CORE_SRC)
+
+# Drive a real drag through the engine and dump every frame. A still image
+# reads as a screenshot of something running; a drag is the thing itself.
+replay: build/replay
+	@mkdir -p build/frames
+	@rm -f build/frames/*.ppm
+	@./build/replay
+	@python3 tools/frames2gif.py
+
+build/replay: tools/replay.c tools/font5x7.c tools/font5x7.h $(CORE_SRC)
+	@mkdir -p build
+	$(CC) $(CFLAGS) -Itools -o $@ tools/replay.c tools/font5x7.c $(CORE_SRC)
 
 test/test_qd: test/test_qd.c $(CORE_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)

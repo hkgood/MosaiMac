@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/img/workspace.png" alt="480×320 桌面，由本仓库的 QuickDraw 引擎渲染" width="460">
+<img src="docs/assets/img/drag.gif" alt="窗口被拖动，逐帧由 QuickDraw 引擎渲染" width="460">
 
 # MosaiMac
 
@@ -26,7 +26,8 @@
 make test     # 1509 + 1615 checks
 make bench    # 吞吐测量
 make asan     # ASan + UBSan
-make render   # 重新生成上面的截图
+make render   # 重新生成静态截图
+make replay   # 重新生成上面的拖动动画
 ```
 
 **ESP32-S31**
@@ -50,6 +51,8 @@ idf.py build flash monitor
 | ESP-IDF 平台层（CO5300 + CST9217 + 推送） | ⚠️ 写完了，**从未编译过** |
 
 平台层没有 ESP-IDF 工具链可编译，是经过 review 的骨架。**「能编译」是第一个待解决的问题，不是「能用」。**
+
+这段动画不是录屏。`make replay` 驱动一次真实的拖动，把 73 帧全部导出，每一帧都是跑在 S31 上的同一份 `src/*.c` 的输出。
 
 ## 三条设计要点
 

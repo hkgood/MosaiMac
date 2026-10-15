@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/img/workspace.png" alt="A 480x320 desktop rendered by this repository's QuickDraw engine" width="460">
+<img src="docs/assets/img/drag.gif" alt="A window being dragged, frame by frame, rendered by the QuickDraw engine" width="460">
 
 # MosaiMac
 
@@ -26,7 +26,8 @@ The 1-bit graphics core of the 1984 Macintosh -- BitBlt, Region, GrafPort -- rew
 make test     # 1509 + 1615 checks
 make bench    # throughput
 make asan     # ASan + UBSan
-make render   # regenerate the screenshot above
+make render   # regenerate the still
+make replay   # regenerate the drag animation above
 ```
 
 **ESP32-S31**
@@ -50,6 +51,10 @@ Board bring-up uses `bsp_display_new()` / `bsp_touch_new()` from [esp-mosaico-bs
 | ESP-IDF platform layer (CO5300 + CST9217 + push) | **written, never compiled** |
 
 There was no ESP-IDF toolchain to build the platform layer, so it is a reviewed skeleton. "It compiles" is the first open question, not "it works".
+
+The animation is not a screen recording. `make replay` drives a real drag
+through the engine and dumps every one of the 73 frames; each is the output of
+the same `src/*.c` that runs on the S31.
 
 ## Three decisions
 
