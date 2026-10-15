@@ -152,8 +152,12 @@ def main():
     )["sha"]
 
     # 4. point the branch at it
+    # Force, because re-running this against a repo that already has the
+    # previous attempt as its tip is not a fast-forward. There is no history
+    # here worth protecting: this is how the branch gets created in the first
+    # place, and every push carries the whole tree.
     call("PATCH", f"/repos/{repo}/git/refs/heads/{branch}",
-          {"sha": commit, "force": False})
+          {"sha": commit, "force": True})
     print(f"\npushed {commit} -> {branch}")
 
 

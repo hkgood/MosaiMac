@@ -1,6 +1,7 @@
 # Host build
 /build/
 *.o
+/test/test_qd
 /test/test_window
 /bench/bench_qd
 
