@@ -1,1 +1,23 @@
-placeholder
+# Host build
+/build/
+*.o
+/test/test_window
+/bench/bench_qd
+
+# ESP-IDF
+/sdkbuild/
+/managed_components/
+/dependencies.lock
+build/
+sdkconfig
+sdkconfig.old
+*.elf
+*.bin
+*.map
+*.dfu
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store

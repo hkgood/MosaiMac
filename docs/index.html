@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MosaiMac — QuickDraw for ESP32-S31</title>
+<meta name="description" content="把 1984 年那套 1-bit 图形系统塞进一块 480×480 的 AMOLED。The 1984 1-bit graphics system, on a 480×480 AMOLED.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="#top">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span>Mo<em>sai</em>Mac</span>
+  </a>
+  <nav class="topnav">
+    <a href="#why" data-en="Why">为什么</a>
+    <a href="#dirty" data-en="Dirty rects">脏矩形</a>
+    <a href="#numbers" data-en="Numbers">实测</a>
+    <a href="#bugs" data-en="Bugs">踩过的坑</a>
+    <a href="#build" data-en="Build">构建</a>
+  </nav>
+  <button id="lang" class="lang" aria-label="Switch language">EN</button>
+</header>
+
+<main>
+
+<!-- ── hero ─────────────────────────────────────────────── -->
+<section class="hero" id="top">
+  <div class="hero-text">
+    <p class="eyebrow" data-en="ESP32-S31 · 480×480 CO5300 · 1 bit/pixel">ESP32-S31 · 480×480 CO5300 · 1 bit/pixel</p>
+    <h1>
+      <span data-en="The 1984 1-bit">1984 年的 1-bit</span>
+      <span data-en="graphics system, on an AMOLED.">图形系统，装进 AMOLED。</span>
+    </h1>
+    <p class="lede" data-en="A clean-room reimplementation of the classic Macintosh graphics core — BitBlt, regions, grafports — rebuilt as portable C11 and aimed at a 480×480 panel. The screenshot below is not a mock-up: it is drawn by the same engine.">
+      对经典 Macintosh 图形核心 —— BitBlt、Region、GrafPort —— 的 clean-room 重实现，用可移植 C11 重写，目标是 480×480 面板。下面那张图不是设计稿，是同一套引擎画出来的。
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/hkgood/MosaiMac" data-en="View source">看源码</a>
+      <a class="btn" href="#build" data-en="Build it">自己构建</a>
+    </div>
+    <dl class="facts">
+      <div><dt data-en="Framebuffer">帧缓冲</dt><dd>18.75 KB</dd></div>
+      <div><dt data-en="Logical screen">逻辑屏幕</dt><dd>480×320</dd></div>
+      <div><dt data-en="Host checks">主机检查</dt><dd>3,124</dd></div>
+      <div><dt data-en="Full-screen XOR">整屏 XOR</dt><dd>0.007 ms</dd></div>
+    </dl>
+  </div>
+  <figure class="hero-shot">
+    <div class="screen">
+      <img src="assets/img/workspace.png" width="480" height="320"
+           alt="480×320 桌面：菜单栏、下拉菜单、文档窗口、硬阴影、反白选区、滚动条、桌面图标">
+    </div>
+    <figcaption data-en="Rendered by tools/render.c through the same src/*.c that runs on the S31. If the span XOR were wrong, this would show ghosting.">
+      由 tools/render.c 通过跑在 S31 上的同一份 src/*.c 画出。span XOR 算错的话，图上会有拖影。
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ── why ──────────────────────────────────────────────── -->
+<section class="section" id="why">
+  <h2 data-en="128 KB, and a window system.">128 KB 内存，和一套窗口系统。</h2>
+  <p class="lede" data-en="The 1984 Macintosh ran draggable windows, region clipping, dirty-rectangle redraw, scroll bars and pull-down menus on a 68000 at 7.836 MHz. Its core was BitBlt and Region.">
+    1984 年的 Macintosh 在 7.836 MHz 的 68000 上跑着可拖动窗口、区域裁剪、脏矩形重绘、滚动条和下拉菜单。它的核心就是 BitBlt 和 Region。
+  </p>
+
+  <div class="cards">
+    <article class="card">
+      <h3 data-en="480×320, not scaled">480×320，不缩放</h3>
+      <p data-en="512×342 → 480×480 would need a resampling stage. But 480/320 = 1.5 and 512/342 ≈ 1.497, so the aspect ratios already agree. Going native deletes a whole pass over every pixel.">
+        512×342 → 480×480 本来需要一整个重采样阶段。但 480/320 = 1.5，512/342 ≈ 1.497，宽高比本来就是一致的。直接用原生尺寸，等于删掉了一次全像素遍历。
+      </p>
+    </article>
+    <article class="card">
+      <h3 data-en="Spans, not packed RLE">Span list，不是 packed RLE</h3>
+      <p data-en="The original crammed a Region into 16 bytes and hand-rolled every set operation in bit twiddling. The S31 has 16 MB of PSRAM, so spending memory on verifiability is free. Rect regions still live in place with zero heap traffic.">
+        原版把 Region 塞进 16 字节，每个集合运算都是手写位运算。S31 有 16 MB PSRAM，用内存换可验证性是白赚的。矩形 Region 仍然原地存储、零堆分配。
+      </p>
+    </article>
+    <article class="card">
+      <h3 data-en="1-bit is the point">1-bit 才是重点</h3>
+      <p data-en="It is the only depth at which a full-screen repaint fits in 16 ms on a device with no GPU, no DMA engine and no alpha. 480×320 is 18,750 bytes, not 460 KB.">
+        在没有 GPU、没有 DMA 引擎、没有 alpha 的设备上，1-bit 是唯一一种能让整屏重绘塞进 16 ms 的位深。480×320 是 18,750 字节，不是 460 KB。
+      </p>
+    </article>
+  </div>
+</section>
+
+<!-- ── dirty rects ──────────────────────────────────────── -->
+<section class="section alt" id="dirty">
+  <h2 data-en="The one that decides everything.">决定一切的那一条。</h2>
+  <p class="lede" data-en="A window move damages the symmetric difference of the old and new positions. How you store that number changes the frame rate by an order of magnitude.">
+    窗口移动损伤的是新旧位置的对称差。你怎么存这个数，帧率差一个数量级。
+  </p>
+
+  <div class="compare">
+    <div class="compare-col bad">
+      <h3 data-en="Store it as a rectangle">存成矩形</h3>
+      <p data-en="The bounding box of a window move is the whole window — even for a one-pixel move.">
+        窗口移动的包围盒就是整个窗口，哪怕只拖 1 像素。
+      </p>
+      <div class="stat">40,800 <small>px/frame · 82 KB</small></div>
+      <div class="verdict" data-en="46 fps on a 14–28 MB/s link">14–28 MB/s 链路上 46 fps</div>
+    </div>
+    <div class="compare-col good">
+      <h3 data-en="Store it as a region">存成 region</h3>
+      <p data-en="Split into per-scanline runs, then coalesce vertically identical runs into maximal rectangles.">
+        切成逐扫描线的 run，再把竖直方向相同的 run 合并成极大矩形。
+      </p>
+      <div class="stat">818 <small>px/frame · 1.6 KB</small></div>
+      <div class="verdict" data-en="Draggable">拖得动</div>
+    </div>
+  </div>
+
+  <table class="data">
+    <thead>
+      <tr><th data-en="Move">移动</th><th data-en="Damaged">损伤</th><th data-en="On the wire">上链路</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>40 px diagonal / 40 px 斜向</td><td>25,600 px</td><td>51 KB</td></tr>
+      <tr class="hi"><td>1 px diagonal / 1 px 斜向</td><td><b>818 px</b></td><td><b>1.6 KB</b></td></tr>
+      <tr><td>no-op / 无操作</td><td>0 px</td><td>0</td></tr>
+    </tbody>
+  </table>
+  <p class="note" data-en="Verified with no hardware at all: test/test_window.c drags a window and, after every step, asserts no pixel outside the window is still set. A stray one is missed damage, and it would show up on the panel as a ghost.">
+    完全不用硬件就能验证：test/test_window.c 拖动窗口，每一步之后断言窗口外没有任何残留黑像素。有残留就是漏掉的损伤，落到面板上就是拖影。
+  </p>
+</section>
+
+<!-- ── numbers ──────────────────────────────────────────── -->
+<section class="section" id="numbers">
+  <h2 data-en="Measured.">实测。</h2>
+  <p class="lede" data-en="x86-64, GCC 12, -O2. The S31 is slower. The ratios are the signal; the absolute numbers are not.">
+    x86-64、GCC 12、-O2。S31 会更慢。有参考价值的是比例，不是绝对值。
+  </p>
+
+  <div class="bench">
+    <div class="bench-row">
+      <span class="bench-name">CopyBits srcXor · aligned</span>
+      <span class="bench-bar"><i style="width:15%"></i></span>
+      <span class="bench-val">0.007 ms</span>
+    </div>
+    <div class="bench-row">
+      <span class="bench-name">CopyBits srcXor · L-region clip</span>
+      <span class="bench-bar"><i style="width:30%"></i></span>
+      <span class="bench-val">0.014 ms</span>
+    </div>
+    <div class="bench-row">
+      <span class="bench-name">200×150 window move</span>
+      <span class="bench-bar"><i style="width:24%"></i></span>
+      <span class="bench-val">0.011 ms</span>
+    </div>
+    <div class="bench-row slow">
+      <span class="bench-name">CopyBits srcXor · misaligned</span>
+      <span class="bench-bar"><i style="width:100%"></i></span>
+      <span class="bench-val">0.047 ms</span>
+    </div>
+    <div class="bench-row slow">
+      <span class="bench-name">1bpp → RGB565 · full frame</span>
+      <span class="bench-bar"><i style="width:100%"></i></span>
+      <span class="bench-val">0.150 ms</span>
+    </div>
+  </div>
+
+  <div class="cards tight">
+    <article class="card">
+      <h3>14× → 6.7×</h3>
+      <p data-en="Unaligned BitBlt was 14× slower than aligned on the per-byte chunked path. Dragging a window is misaligned by definition, so the source now slides through a 64-bit window instead.">
+        非对齐 BitBlt 曾经走逐字节分块路径，比对齐慢 14 倍。拖窗口天生非对齐，所以改成把源数据过 64 位窗口滑动。
+      </p>
+      <p class="delta">0.104 → 0.047 ms</p>
+    </article>
+    <article class="card">
+      <h3>O(y) → O(1)</h3>
+      <p data-en="qd_region_spans() summed the per-line span counts up to the requested line, making a full-screen region-clipped blit quadratic. A prefix-sum offset table fixed it.">
+        qd_region_spans() 每次查询都要把前面所有行的 span 数累加一遍，让整屏 region blit 变成平方复杂度。换成前缀和 offset 表。
+      </p>
+      <p class="delta">0.040 → 0.014 ms</p>
+    </article>
+  </div>
+</section>
+
+<!-- ── bugs ─────────────────────────────────────────────── -->
+<section class="section alt" id="bugs">
+  <h2 data-en="Bugs the engine had.">引擎踩过的坑。</h2>
+  <p class="lede" data-en="Every one of these was invisible on the common path. All of them are still guarded by a regression test.">
+    每一条在常见路径上都看不出来。现在每一条都有回归测试守着。
+  </p>
+  <ul class="bugs">
+    <li><b>Missing phase shift in <code>rop_byte_chunk()</code></b><span data-en="Correct only when dp == 0, i.e. every unaligned span was wrong. The whole-byte path hid it.">只在 dp == 0 时正确，也就是所有非对齐 span 全错。整字节路径把它盖住了。</span></li>
+    <li><b>Phase-blind partial-byte mask in <code>qd_fill_span_1bpp()</code></b><span data-en="Only wrong when the head or tail got clipped — first seen when frameRect clipped a 3 px border down to 3 px.">只在 head/tail 被裁剪时错，第一次暴露是 frameRect 把 3px 边框裁成 3px。</span></li>
+    <li><b>XOR truncated to the operand intersection</b><span data-en="Only INTERSECT is bounded by the overlap; XOR and UNION both reach outside it.">只有 INTERSECT 会被交集框住，XOR 和 UNION 都会伸出去。</span></li>
+    <li><b><code>spans_xor</code> lost spans</b><span data-en="One span can overlap the next span of the other list, which neither a head/tail merge nor a two-cursor merge handles. Replaced with an event sweep.">一个 span 可能压住另一个列表的下一个 span，头尾合并和双游标都处理不了。换成事件扫描。</span></li>
+    <li><b><code>qd_port_set_white()</code> existed, <code>qd_fill_rect()</code> ignored it</b><span data-en="The caller sets white expecting to erase, gets black, and has no way at all to notice.">调用方设白笔期待擦除，实际得到黑色，而且完全没法察觉。</span></li>
+    <li><b>The empty region was a sentinel pointer</b><span data-en="A missing initialisation became heap corruption instead of an empty region.">忘初始化会变成堆损坏，而不是一个空 region。</span></li>
+  </ul>
+</section>
+
+<!-- ── build ────────────────────────────────────────────── -->
+<section class="section" id="build">
+  <h2 data-en="Build it.">构建。</h2>
+  <div class="build-grid">
+    <div class="code">
+      <div class="code-head" data-en="Host — no hardware needed">主机 — 不需要硬件</div>
+<pre><code><span class="c"># correctness + throughput + sanitised run</span>
+make test
+make bench
+make asan
+
+<span class="c"># regenerate the screenshot above</span>
+make render</code></pre>
+    </div>
+    <div class="code">
+      <div class="code-head" data-en="ESP32-S31 — via esp-mosaico-vibe">ESP32-S31 — 走 esp-mosaico-vibe</div>
+<pre><code>git clone https://github.com/esp-mosaico/esp-mosaico-vibe.git
+cd esp-mosaico-vibe
+git submodule update --init <span class="c">\</span>
+  submodule/esp-mosaico-utils <span class="c">\</span>
+  submodule/esp-mosaico-bsp
+git clone https://github.com/hkgood/MosaiMac.git <span class="c">\</span>
+  projects/qd_esp32s31</code></pre>
+    </div>
+  </div>
+  <p class="note" data-en="Board bring-up is delegated to esp-mosaico-bsp (bsp_display_new() / bsp_touch_new()) rather than hard-coding the CO5300 and CST9217 pin mapping. The sibling project mosaico-film does exactly this.">
+    板级初始化交给 esp-mosaico-bsp（bsp_display_new() / bsp_touch_new()），不自己硬编码 CO5300 和 CST9217 的引脚。同目录的 mosaico-film 就是这么做的。
+  </p>
+</section>
+
+<!-- ── status ───────────────────────────────────────────── -->
+<section class="section alt" id="status">
+  <h2 data-en="Status, honestly.">现状，老实说。</h2>
+  <table class="status">
+    <tr><td data-en="ROP / CopyBits / fill / frameRect">ROP / CopyBits / fill / frameRect</td><td class="ok">done · host-tested</td></tr>
+    <tr><td data-en="Regions: union / intersect / xor / offset / invert">Region：union / intersect / xor / offset / invert</td><td class="ok">done · host-tested</td></tr>
+    <tr><td data-en="GrafPort: clip, origin, Save/RestoreGState">GrafPort：clip、origin、Save/RestoreGState</td><td class="ok">done · host-tested</td></tr>
+    <tr><td data-en="Window-move dirty-rect loop">窗口移动脏矩形回路</td><td class="ok">done · host-tested</td></tr>
+    <tr><td data-en="1bpp → RGB565 expansion, banded push">1bpp → RGB565 展开、分带推送</td><td class="ok">done · host-tested</td></tr>
+    <tr><td data-en="ESP-IDF / ESP32-S31 port">ESP-IDF / ESP32-S31 移植</td><td class="warn">written, never compiled</td></tr>
+  </table>
+  <p class="note warn-note" data-en="The core passes 3,124 checks under ASan and UBSan on a host. The platform layer is a reviewed skeleton — there was no ESP-IDF toolchain to compile it. &quot;It compiles&quot; is the first open question, not &quot;it works&quot;.">
+    核心在主机上过 3,124 个检查，ASan + UBSan 干净。平台层是经过 review 的骨架 —— 没有 ESP-IDF 工具链可编译它。<strong>「能编译」是第一个待解决的问题，不是「能用」。</strong>
+  </p>
+</section>
+
+</main>
+
+<footer>
+  <p>
+    <a href="https://github.com/hkgood/MosaiMac">Source</a> ·
+    <a href="https://github.com/hkgood/MosaiMac/blob/main/README.md">README</a> ·
+    <a href="https://github.com/hkgood/MosaiMac/blob/main/README.en.md">README.en</a>
+  </p>
+  <p class="fine" data-en="Apple, Macintosh and QuickDraw are trademarks of Apple Inc. This project is independent and is not affiliated with or endorsed by Apple. QuickDraw is reimplemented from observed behaviour; no Apple source is used.">
+    Apple、Macintosh 和 QuickDraw 是 Apple Inc. 的商标。本项目独立开发，与 Apple 无关联或背书关系。QuickDraw 是根据可观察行为重新实现的，未使用任何 Apple 源码。
+  </p>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

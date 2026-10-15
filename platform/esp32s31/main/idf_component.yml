@@ -1,0 +1,8 @@
+dependencies:
+  idf:
+    version: ">=5.4"
+  # Board support: CO5300 QSPI panel + CST9217 touch, already wired up with
+  # the correct pin mapping and glass orientation. Pulled in as a submodule
+  # by the esp-mosaico-vibe workspace, or fetched here for a standalone build.
+  bsp:
+    git: "https://github.com/esp-mosaico/esp-mosaico-bsp.git"
