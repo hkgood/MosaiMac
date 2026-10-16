@@ -48,12 +48,22 @@ Board bring-up uses `bsp_display_new()` / `bsp_touch_new()` from [esp-mosaico-bs
 | | |
 |---|---|
 | ROP / CopyBits / Region / GrafPort / dirty-rect loop | done -- 3,124 host checks, ASan + UBSan clean |
-| ESP-IDF platform layer (CO5300 + CST9220 + push) | **builds a firmware image** on ESP-IDF v6.2.0 / esp32s31 |
-| Verified on hardware | no -- there is no board here |
+| ESP-IDF platform layer (CO5300 + CST9220 + push) | compiles |
+| `.irisfw` bundle | **produced**, 237.7 KB |
+| Installed and verified on hardware | no -- there is no board here |
 
-`mosaimac.bin`, 312 KB, built with IDF **master @ 7b9cc1ac** (the same commit esp-mosaico-vibe pins) for target `esp32s31`.
+Built in the [esp-mosaico-vibe](https://github.com/esp-mosaico/esp-mosaico-vibe) workspace with `mosaico.py iris system-update`:
 
-**"It compiles" is still not "it runs"** -- none of this has been on a panel.
+```
+qd_esp32s31-system-update.irisfw    237.7 KB
+  manifest.json         esp-iris-system-update/0.2
+  partition-table.bin   4 KB
+  ota_0.bin             466 KB
+```
+
+ESP-IDF **v6.2.0** (master @ `7b9cc1ac`, the commit the workspace pins), target `esp32s31`, 16 MB flash.
+
+**Nothing has been installed or run.** CO5300 init timing, CST9220 coordinate calibration and the even-aligned window behaviour on a real panel are all unverified.
 
 The animation is not a screen recording. `make replay` drives a real drag
 through the engine and dumps every one of the 73 frames; each is the output of

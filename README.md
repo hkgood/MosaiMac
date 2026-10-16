@@ -48,12 +48,22 @@ idf.py build flash monitor
 | | |
 |---|---|
 | ROP / CopyBits / Region / GrafPort / 脏矩形回路 | ✅ 主机测试覆盖，3124 checks，ASan + UBSan 干净 |
-| ESP-IDF 平台层（CO5300 + CST9220 + 推送） | ✅ 在 ESP-IDF v6.2.0 + esp32s31 下**编译出固件** |
-| 上机验证 | ❌ 没有硬件 |
+| ESP-IDF 平台层（CO5300 + CST9220 + 推送） | ✅ 编译通过 |
+| `.irisfw` 打包 | ✅ **产出 bundle**，237.7 KB |
+| 上机安装与验证 | ❌ 没有硬件 |
 
-`mosaimac.bin`，312 KB。编译环境是 IDF **master @ 7b9cc1ac**（和 esp-mosaico-vibe 钉的同一个 commit），target `esp32s31`。
+在 [esp-mosaico-vibe](https://github.com/esp-mosaico/esp-mosaico-vibe) 工作区里用 `mosaico.py iris system-update` 打出：
 
-但**「能编译」不等于「能在屏上跑」** —— 还没上过板子。
+```
+qd_esp32s31-system-update.irisfw    237.7 KB
+  manifest.json         esp-iris-system-update/0.2
+  partition-table.bin   4 KB
+  ota_0.bin             466 KB
+```
+
+编译环境：ESP-IDF **v6.2.0**（master @ `7b9cc1ac`，和 workspace 钉的同一 commit），target `esp32s31`，16 MB flash。
+
+**但没有硬件，所以没装过、没跑过。** CO5300 初始化时序、CST9220 坐标校准、偶数对齐窗口在真屏上的行为 —— 三样全部未验证。
 
 这段动画不是录屏。`make replay` 驱动一次真实的拖动，把 73 帧全部导出，每一帧都是跑在 S31 上的同一份 `src/*.c` 的输出。
 

@@ -237,11 +237,12 @@ git clone https://github.com/hkgood/MosaiMac.git <span class="c">\</span>
     <tr><td data-en="GrafPort: clip, origin, Save/RestoreGState">GrafPort：clip、origin、Save/RestoreGState</td><td class="ok">done · host-tested</td></tr>
     <tr><td data-en="Window-move dirty-rect loop">窗口移动脏矩形回路</td><td class="ok">done · host-tested</td></tr>
     <tr><td data-en="1bpp → RGB565 expansion, banded push">1bpp → RGB565 展开、分带推送</td><td class="ok">done · host-tested</td></tr>
-    <tr><td data-en="ESP-IDF / ESP32-S31 port">ESP-IDF / ESP32-S31 移植</td><td class="ok">builds · 312 KB firmware</td></tr>
-    <tr><td data-en="Verified on real hardware">真实硬件验证</td><td class="warn">no board, yet</td></tr>
+    <tr><td data-en="ESP-IDF / ESP32-S31 port">ESP-IDF / ESP32-S31 移植</td><td class="ok">compiles</td></tr>
+    <tr><td data-en=".irisfw bundle">.irisfw 打包</td><td class="ok">produced · 237.7 KB</td></tr>
+    <tr><td data-en="Installed and verified on hardware">安装上板验证</td><td class="warn">no board, yet</td></tr>
   </table>
-  <p class="note warn-note" data-en="The core passes 3,124 checks under ASan and UBSan on a host, and the firmware builds with ESP-IDF v6.2.0 for esp32s31. None of it has run on a panel yet: CO5300 init timing, CST9220 calibration and the even-aligned window behaviour all need hardware. &quot;It compiles&quot; is still not &quot;it runs&quot;.">
-    核心在主机上过 3,124 个检查，ASan + UBSan 干净；固件在 ESP-IDF v6.2.0 / esp32s31 下能编出来。<strong>但全都还没上过板子</strong> —— CO5300 初始化时序、CST9220 坐标校准、偶数对齐窗口的实际行为，都要硬件才能确认。「能编译」仍然不等于「能跑」。
+  <p class="note warn-note" data-en="The core passes 3,124 checks under ASan and UBSan on a host, the firmware compiles with ESP-IDF v6.2.0 for esp32s31, and the workspace packages it into a 237.7 KB .irisfw bundle. None of it has been installed on a device or run on a panel: CO5300 init timing, CST9220 calibration and the even-aligned window behaviour all need hardware.">
+    核心在主机上过 3,124 个检查，ASan + UBSan 干净；固件在 ESP-IDF v6.2.0 / esp32s31 下能编出来，workspace 也打出了 237.7 KB 的 <code>.irisfw</code> bundle。<strong>但从没装到设备、更没上过屏</strong> —— CO5300 初始化时序、CST9220 坐标校准、偶数对齐窗口的真实行为，都要硬件才能确认。
   </p>
 </section>
 

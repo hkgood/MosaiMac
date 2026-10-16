@@ -56,6 +56,21 @@ S31 有 16 MB PSRAM，所以用内存换可验证性是白赚的：span list 更
 
 `test/test_window.c` 在没有硬件的情况下验证整条回路：拖动窗口，每一步之后断言窗口外**没有任何残留黑像素**（那就是漏掉的损伤，落到面板上就是拖影），断言标题栏和边框确实画出来了，断言被跨过的下层窗口完好。
 
+## Iris 打包
+
+`mosaico.py iris system-update` 走 `system_update.cmake`，产物是一个 zip：
+
+```
+qd_esp32s31-system-update.irisfw   237.7 KB
+  manifest.json         schema=esp-iris-system-update/0.2, chip_id=32, flash=16 MB
+  partition-table.bin   4 KB
+  ota_0.bin             466 KB
+```
+
+`chip_id: 32` 就是 esp32s31。流程和纯 IDF 构建不同的地方在于它多两层 workspace 约定：`.mosaico.json` 的 schema（当前要 v2）、以及项目 CMakeLists 末尾那句 `include(system_update.cmake)` —— 打包规则定义在那里，手写 CMakeLists 会漏掉。
+
+另外 `system-update` 的语义是**安装**：构建完成后它要去发现设备、握手、推送。没有硬件的话它停在 `gateway: connecting`，退出码 4。所以这里能验证的只有「构建出 bundle」，「装上设备」这一步没走过。
+
 ## 编译验证
 
 引擎在 RISC-V 目标下**从一开始就是干净的** —— `riscv32-esp-elf-gcc` 加 `-Wall -Wextra -Wconversion` 零警告。平台层第一次真实编译时暴露了三个错误，全部是 API 用法：
@@ -138,7 +153,7 @@ PPA 主要加速 RGB 图层合成，而 QuickDraw 的 ROP 是 1-bit。把它塞�
 
 ## 已知问题
 
-1. **没有上板验证过。** 固件能编出来（ESP-IDF v6.2.0 / esp32s31，312 KB），但从没在真实面板上跑过。CO5300 的初始化时序、CST9220 的坐标校准、偶数对齐窗口的实际行为，全都要硬件才能确认。
+1. **没有上板验证过。** 固件能编出来，`.irisfw` bundle 也打出来了（237.7 KB，esp-iris-system-update/0.2，含 `ota_0.bin` 466 KB + `partition-table.bin`），但从没装到设备、更没在真实面板上跑过。CO5300 的初始化时序、CST9220 的坐标校准、偶数对齐窗口的实际行为，全都要硬件才能确认。
 2. **QSPI 时钟 40 MHz 是假设值**，实测之前别信帧率估算。
 3. **S31 的 ISA 字符串官方没公开说明**，「无 RISC-V V 扩展」来自二手资料。引擎是纯 C，要用 SIMD 得重写。
 4. `esp-mosaico-bsp` 的 `display.h` include 了 `esp_lcd_touch.h` 却没在自己的 REQUIRES 里声明 `espressif/esp_lcd_touch`，直接 include 这个头会编不过。本项目在自己的组件里补了声明，没有去改 BSP。
