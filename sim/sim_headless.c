@@ -100,6 +100,9 @@ int main(int argc, char **argv)
 {
     const char *outdir = (argc > 1) ? argv[1] : "sim_frames";
     const int steps = (argc > 2) ? atoi(argv[2]) : 60;
+    /* Frames are for the README animation; the verification itself does not
+     * need them, and writing 60 PPMs on every `make test` is pure waste. */
+    const int dump = (argc > 3) ? atoi(argv[3]) : 0;
 
     char path[512];
 
@@ -133,10 +136,12 @@ int main(int argc, char **argv)
     twin.needs_full = true;
     sim_present(&twin);
 
-    snprintf(path, sizeof path, "%s/step000.ppm", outdir);
-    if (write_ppm(path, s.panel) != 0) {
-        fprintf(stderr, "cannot write %s\n", path);
-        return 1;
+    if (dump) {
+        snprintf(path, sizeof path, "%s/step000.ppm", outdir);
+        if (write_ppm(path, s.panel) != 0) {
+            fprintf(stderr, "cannot write %s\n", path);
+            return 1;
+        }
     }
     if (verify(&s, &ref, &twin, 0) != 0) return 1;
 
@@ -156,6 +161,13 @@ int main(int argc, char **argv)
         sim_mouse(&s, SIM_MOUSE_DRAG, x, y);
         sim_present(&s);
         twin_step(&twin, SIM_MOUSE_DRAG, x, y);
+        if (dump) {
+            snprintf(path, sizeof path, "%s/step%03d.ppm", outdir, i);
+            if (write_ppm(path, s.panel) != 0) {
+                fprintf(stderr, "cannot write %s\n", path);
+                return 1;
+            }
+        }
         if (verify(&s, &ref, &twin, i) != 0) {
             printf("  drag aborted at step %d\n", i);
             return 1;
@@ -167,10 +179,12 @@ int main(int argc, char **argv)
     twin_step(&twin, SIM_MOUSE_UP, 0, 0);
     sim_present(&s);
 
-    snprintf(path, sizeof path, "%s/step%03d.ppm", outdir, steps);
-    if (write_ppm(path, s.panel) != 0) {
-        fprintf(stderr, "cannot write %s\n", path);
-        return 1;
+    if (dump) {
+        snprintf(path, sizeof path, "%s/step%03d.ppm", outdir, steps);
+        if (write_ppm(path, s.panel) != 0) {
+            fprintf(stderr, "cannot write %s\n", path);
+            return 1;
+        }
     }
 
     printf("headless simulator: %d drag steps, every pixel of every frame "

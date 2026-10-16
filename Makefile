@@ -67,8 +67,13 @@ build/sim_headless: sim/sim_headless.c $(SIM_SRC) $(HEADERS)
 # Every pixel of every frame is compared against an independent full repaint,
 # so this is a test target, not a demo.
 sim: build/sim_headless
-	@rm -rf build/sim_frames
 	./build/sim_headless build/sim_frames 60
+
+# Same run, but keeping every frame: this is the README animation.
+sim-frames: build/sim_headless
+	@rm -rf build/sim_frames
+	./build/sim_headless build/sim_frames 73 1
+	@python3 tools/frames2gif.py
 
 build/sim_asan: sim/sim_headless.c $(SIM_SRC) $(HEADERS)
 	@mkdir -p build
