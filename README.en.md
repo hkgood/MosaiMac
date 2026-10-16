@@ -65,9 +65,9 @@ ESP-IDF **v6.2.0** (master @ `7b9cc1ac`, the commit the workspace pins), target 
 
 **Nothing has been installed or run.** CO5300 init timing, CST9220 coordinate calibration and the even-aligned window behaviour on a real panel are all unverified.
 
-The animation is not a screen recording. `make replay` drives a real drag
-through the engine and dumps every one of the 73 frames; each is the output of
-the same `src/*.c` that runs on the S31.
+The animation is not a screen recording. `make sim-frames` drives a real drag
+through the shared window manager and dumps every one of the 74 frames; each is the output of
+the same `src/*.c` the firmware runs, black bezel included.
 
 ## Three decisions
 
