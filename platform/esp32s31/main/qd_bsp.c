@@ -40,6 +40,11 @@ static bool s_ready;
  * this a band rather than a full frame costs 30 KB instead of 300 KB, and a
  * dirty rect taller than the band is simply sent in slices. */
 #define QD_BSP_BAND_H 32
+
+/* Bound on spans per scanline when splitting damage into runs. Matches
+ * the engine's internal per-scanline capacity; a window move never
+ * produces anywhere near this many spans per line. */
+#define QD_BSP_MAX_SPANS 64
 static uint16_t s_band[QD_BSP_PANEL_W * QD_BSP_BAND_H] __attribute__((aligned(4)));
 
 /* Accumulated damage, kept as a region so a diagonal window move does not
@@ -193,10 +198,10 @@ int qd_bsp_flush(const qd_region_t *r)
     int sent = 0;
     qd_rect_t active[QD_MAX_ACTIVE];
     int nactive = 0;
-    qd_span_t spans[QD_MAX_SPANS_PER_SCANLINE];
+    qd_span_t spans[QD_BSP_MAX_SPANS];
 
     for (int y = r->top; y < r->bottom; y++) {
-        const int32_t ns = qd_region_spans(r, (int16_t)y, spans, QD_MAX_SPANS_PER_SCANLINE);
+        const int32_t ns = qd_region_spans(r, (int16_t)y, spans, QD_BSP_MAX_SPANS);
         if (ns <= 0) continue;
 
         int nnext = 0;
@@ -243,14 +248,20 @@ qd_bsp_event_t qd_bsp_poll_touch(void)
     qd_bsp_event_t ev = { QD_BSP_EVENT_NONE, 0, 0, 0 };
     if (!s_ready || s_touch == NULL) return ev;
 
-    esp_lcd_touch_point_t pt;
-    uint16_t flags = 0;
+    /*
+     * esp_lcd_touch_get_coordinates() is deprecated as of this component
+     * version and returns "no data" rather than "released", so contact has to
+     * come from a point count instead. The whole struct is handed back by
+     * value, which is why this cannot be a pointer to caller storage.
+     */
+    esp_lcd_touch_point_data_t pt = { 0 };
+    uint8_t n = 0;
 
-    esp_lcd_touch_read_data(s_touch);
-    bool pressed = esp_lcd_touch_get_coordinates(s_touch, &pt, 1, &flags) == ESP_OK &&
-                   (flags & ESP_LCD_TOUCH_CONTACT) != 0;
+    const esp_err_t err = esp_lcd_touch_get_data(s_touch, &pt, &n, 1);
 
     static bool was_down;
+    const bool pressed = (err == ESP_OK) && (n > 0);
+
     if (!pressed) {
         if (was_down) ev.kind = QD_BSP_EVENT_UP;
         was_down = false;
@@ -263,10 +274,13 @@ qd_bsp_event_t qd_bsp_poll_touch(void)
     /* The screen is the full panel width, so X passes straight through. Y is
      * lifted out of the top bezel; a touch in the bottom bezel clamps to the
      * bottom scanline rather than wrapping to a negative row. */
-    ev.x = (int16_t)(pt.x < 0 ? 0 : (pt.x > QD_SCREEN_W - 1 ? QD_SCREEN_W - 1 : pt.x));
-    ev.y = (int16_t)(pt.y - QD_BSP_SCREEN_YOFF);
-    if (ev.y < 0) ev.y = 0;
-    if (ev.y > QD_SCREEN_H - 1) ev.y = QD_SCREEN_H - 1;
-    ev.pressure = (int16_t)(pt.z > 0 ? pt.z : 1);
+    const int16_t x = pt.x > (uint16_t)(QD_SCREEN_W - 1) ? (int16_t)(QD_SCREEN_W - 1)
+                                                        : (int16_t)pt.x;
+    int16_t y = (int16_t)(pt.y - QD_BSP_SCREEN_YOFF);
+    if (y < 0) y = 0;
+    if (y > QD_SCREEN_H - 1) y = QD_SCREEN_H - 1;
+    ev.x = x;
+    ev.y = y;
+    ev.pressure = (int16_t)(pt.strength > 0 ? pt.strength : 1);
     return ev;
 }

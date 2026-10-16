@@ -7,7 +7,7 @@
  * the graphics engine.
  *
  * Board bring-up is delegated to esp-mosaico-bsp rather than reimplemented.
- * That BSP knows the real CO5300 and CST9217 pin mapping, the glass mounting
+ * That BSP knows the real CO5300 and CST9220 pin mapping, the glass mounting
  * orientation, and the panel's power sequence; hard-coding those here would
  * only be a slower way to get it wrong, and it would be wrong on the next
  * board revision.
@@ -98,7 +98,7 @@ typedef struct {
  * Poll the touch digitiser. Fills `out` with one pending event or
  * QD_BSP_EVENT_NONE when the finger is up or nothing has changed.
  *
- * Single-touch by design: the CST9217 reports one contact, and QuickDraw's
+ * Single-touch by design: the CST9220 reports one contact, and QuickDraw's
  * original event model has no notion of a second pointer. Multi-touch would
  * need a reworked event layer, not just a bigger touch struct.
  */

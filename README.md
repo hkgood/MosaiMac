@@ -48,7 +48,7 @@ idf.py build flash monitor
 | | |
 |---|---|
 | ROP / CopyBits / Region / GrafPort / 脏矩形回路 | ✅ 主机测试覆盖，3124 checks，ASan + UBSan 干净 |
-| ESP-IDF 平台层（CO5300 + CST9217 + 推送） | ⚠️ 写完了，**从未编译过** |
+| ESP-IDF 平台层（CO5300 + CST9220 + 推送） | ⚠️ 写完了，**从未编译过** |
 
 平台层没有 ESP-IDF 工具链可编译，是经过 review 的骨架。**「能编译」是第一个待解决的问题，不是「能用」。**
 

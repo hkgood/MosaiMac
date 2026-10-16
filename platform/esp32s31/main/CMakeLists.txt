@@ -16,10 +16,10 @@ idf_component_register(
 )
 
 # Board bring-up comes from esp-mosaico-bsp, which already owns the CO5300 and
-# CST9217 pin mapping, the glass mounting orientation and the power sequence.
+# CST9220 pin mapping, the glass mounting orientation and the power sequence.
 # Its dependencies pull in the panel and touch drivers, so there is nothing
 # extra to declare here.
 #
 # For a standalone (non-workspace) build:
 #   idf.py add-dependency "espressif/esp_lcd_co53000"
-#   idf.py add-dependency "espressif/esp_lcd_touch_cst9217"
+#   idf.py add-dependency "espressif/esp_lcd_touch_cst9220"

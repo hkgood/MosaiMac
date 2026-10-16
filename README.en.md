@@ -48,7 +48,7 @@ Board bring-up uses `bsp_display_new()` / `bsp_touch_new()` from [esp-mosaico-bs
 | | |
 |---|---|
 | ROP / CopyBits / Region / GrafPort / dirty-rect loop | done -- 3,124 host checks, ASan + UBSan clean |
-| ESP-IDF platform layer (CO5300 + CST9217 + push) | **written, never compiled** |
+| ESP-IDF platform layer (CO5300 + CST9220 + push) | **written, never compiled** |
 
 There was no ESP-IDF toolchain to build the platform layer, so it is a reviewed skeleton. "It compiles" is the first open question, not "it works".
 
