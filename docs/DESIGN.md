@@ -56,6 +56,14 @@ S31 有 16 MB PSRAM，所以用内存换可验证性是白赚的：span list 更
 
 `test/test_window.c` 在没有硬件的情况下验证整条回路：拖动窗口，每一步之后断言窗口外**没有任何残留黑像素**（那就是漏掉的损伤，落到面板上就是拖影），断言标题栏和边框确实画出来了，断言被跨过的下层窗口完好。
 
+## 编译验证
+
+引擎在 RISC-V 目标下**从一开始就是干净的** —— `riscv32-esp-elf-gcc` 加 `-Wall -Wextra -Wconversion` 零警告。平台层第一次真实编译时暴露了三个错误，全部是 API 用法：
+
+- **触摸芯片是 CST9220，不是 CST9217。** 写在 BSP 的 `idf_component.yml` 里，我最初的调研记错了。
+- **`esp_lcd_touch_get_coordinates()` 已废弃**，而且它返回「无数据」而不是「已抬起」，所以接触状态要靠点数判断。换成 `esp_lcd_touch_get_data()`。
+- **`QD_MAX_SPANS_PER_SCANLINE` 是引擎内部常量**，不在公开头文件里。调用方自己定了一个界，而不是为了一个调用者去扩大公开 API。
+
 ## 实测
 
 主机：x86-64、GCC 12、`-O2`。S31 会更慢 —— **有参考价值的是比例，不是绝对值。**
@@ -130,7 +138,7 @@ PPA 主要加速 RGB 图层合成，而 QuickDraw 的 ROP 是 1-bit。把它塞�
 
 ## 已知问题
 
-1. `set-target esp32s31` 在你的 IDF 里可能还不存在（preview 芯片），需要指到 Espressif 的 preview 分支
-2. ESP-IDF 平台层**从未编译过**
-3. QSPI 时钟 40 MHz 是假设值，实测之前别信帧率估算
-4. S31 的 ISA 字符串官方没公开公开说明，「无 RISC-V V 扩展」来自二手资料。引擎是纯 C，要用 SIMD 得重写
+1. **没有上板验证过。** 固件能编出来（ESP-IDF v6.2.0 / esp32s31，312 KB），但从没在真实面板上跑过。CO5300 的初始化时序、CST9220 的坐标校准、偶数对齐窗口的实际行为，全都要硬件才能确认。
+2. **QSPI 时钟 40 MHz 是假设值**，实测之前别信帧率估算。
+3. **S31 的 ISA 字符串官方没公开说明**，「无 RISC-V V 扩展」来自二手资料。引擎是纯 C，要用 SIMD 得重写。
+4. `esp-mosaico-bsp` 的 `display.h` include 了 `esp_lcd_touch.h` 却没在自己的 REQUIRES 里声明 `espressif/esp_lcd_touch`，直接 include 这个头会编不过。本项目在自己的组件里补了声明，没有去改 BSP。

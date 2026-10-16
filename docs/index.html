@@ -237,10 +237,11 @@ git clone https://github.com/hkgood/MosaiMac.git <span class="c">\</span>
     <tr><td data-en="GrafPort: clip, origin, Save/RestoreGState">GrafPort：clip、origin、Save/RestoreGState</td><td class="ok">done · host-tested</td></tr>
     <tr><td data-en="Window-move dirty-rect loop">窗口移动脏矩形回路</td><td class="ok">done · host-tested</td></tr>
     <tr><td data-en="1bpp → RGB565 expansion, banded push">1bpp → RGB565 展开、分带推送</td><td class="ok">done · host-tested</td></tr>
-    <tr><td data-en="ESP-IDF / ESP32-S31 port">ESP-IDF / ESP32-S31 移植</td><td class="warn">written, never compiled</td></tr>
+    <tr><td data-en="ESP-IDF / ESP32-S31 port">ESP-IDF / ESP32-S31 移植</td><td class="ok">builds · 312 KB firmware</td></tr>
+    <tr><td data-en="Verified on real hardware">真实硬件验证</td><td class="warn">no board, yet</td></tr>
   </table>
-  <p class="note warn-note" data-en="The core passes 3,124 checks under ASan and UBSan on a host. The platform layer is a reviewed skeleton — there was no ESP-IDF toolchain to compile it. &quot;It compiles&quot; is the first open question, not &quot;it works&quot;.">
-    核心在主机上过 3,124 个检查，ASan + UBSan 干净。平台层是经过 review 的骨架 —— 没有 ESP-IDF 工具链可编译它。<strong>「能编译」是第一个待解决的问题，不是「能用」。</strong>
+  <p class="note warn-note" data-en="The core passes 3,124 checks under ASan and UBSan on a host, and the firmware builds with ESP-IDF v6.2.0 for esp32s31. None of it has run on a panel yet: CO5300 init timing, CST9220 calibration and the even-aligned window behaviour all need hardware. &quot;It compiles&quot; is still not &quot;it runs&quot;.">
+    核心在主机上过 3,124 个检查，ASan + UBSan 干净；固件在 ESP-IDF v6.2.0 / esp32s31 下能编出来。<strong>但全都还没上过板子</strong> —— CO5300 初始化时序、CST9220 坐标校准、偶数对齐窗口的实际行为，都要硬件才能确认。「能编译」仍然不等于「能跑」。
   </p>
 </section>
 

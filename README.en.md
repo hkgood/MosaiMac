@@ -48,9 +48,12 @@ Board bring-up uses `bsp_display_new()` / `bsp_touch_new()` from [esp-mosaico-bs
 | | |
 |---|---|
 | ROP / CopyBits / Region / GrafPort / dirty-rect loop | done -- 3,124 host checks, ASan + UBSan clean |
-| ESP-IDF platform layer (CO5300 + CST9220 + push) | **written, never compiled** |
+| ESP-IDF platform layer (CO5300 + CST9220 + push) | **builds a firmware image** on ESP-IDF v6.2.0 / esp32s31 |
+| Verified on hardware | no -- there is no board here |
 
-There was no ESP-IDF toolchain to build the platform layer, so it is a reviewed skeleton. "It compiles" is the first open question, not "it works".
+`mosaimac.bin`, 312 KB, built with IDF **master @ 7b9cc1ac** (the same commit esp-mosaico-vibe pins) for target `esp32s31`.
+
+**"It compiles" is still not "it runs"** -- none of this has been on a panel.
 
 The animation is not a screen recording. `make replay` drives a real drag
 through the engine and dumps every one of the 73 frames; each is the output of
