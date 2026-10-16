@@ -406,9 +406,17 @@ static void test_expand(void)
     uint16_t out[8];
     qd_expand_1bpp_to_rgb565(row, 0, 8, out);
 
-    const uint8_t expect[8] = { 1, 0, 1, 1, 0, 0, 1, 0 };
+    /*
+     * Which bit colour is which is a build-time choice (QD_INVERT), so the
+     * expectation follows it instead of being hard-coded. Previously this test
+     * asserted the 1984 mapping directly and then quietly started failing the
+     * moment the default flipped to the AMOLED-friendly one -- 1368 failures
+     * that had nothing to do with the expansion code under test.
+     */
+    const uint8_t bits[8] = { 1, 0, 1, 1, 0, 0, 1, 0 };
     for (int i = 0; i < 8; i++) {
-        const uint16_t want = expect[i] ? QD_WHITE : QD_BLACK;
+        const int on = QD_INVERT ? !bits[i] : bits[i];
+        const uint16_t want = on ? QD_WHITE : QD_BLACK;
         CHECK(out[i] == want, "expand bit %d = %04x, want %04x", i, out[i], want);
     }
 
@@ -419,7 +427,8 @@ static void test_expand(void)
     for (int i = 0; i < 16; i++) {
         const int px = 3 + i;
         const int want_on = (row2[px >> 3] >> (7 - (px & 7))) & 1;
-        const uint16_t want = want_on ? QD_WHITE : QD_BLACK;
+        /* Follow the build's QD_INVERT mapping, see above. */
+        const uint16_t want = (QD_INVERT ? !want_on : want_on) ? QD_WHITE : QD_BLACK;
         CHECK(out2[i] == want, "unaligned expand bit %d = %04x, want %04x", i, out2[i], want);
     }
 
@@ -435,7 +444,8 @@ static void test_expand(void)
     for (int y = r.top; y < r.bottom; y++) {
         for (int x = r.left; x < r.right; x++) {
             const int want_on = ref_get(g_src, BM_RB, x, y);
-            const uint16_t want = want_on ? QD_WHITE : QD_BLACK;
+            /* Follow the build's QD_INVERT mapping, see above. */
+        const uint16_t want = (QD_INVERT ? !want_on : want_on) ? QD_WHITE : QD_BLACK;
             const uint16_t got = rect_out[(y - r.top) * (r.right - r.left) + (x - r.left)];
             CHECK(got == want, "rect expand (%d,%d) = %04x, want %04x", x, y, got, want);
         }

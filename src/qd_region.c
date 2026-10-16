@@ -47,14 +47,24 @@ void qd_region_init_rect(qd_region_rect_t *rr, qd_rect_t r)
  * and qd_region_is_rect() correctly reports true because it *is* expressible
  * as a rect. No sentinel pointer required.
  */
+/*
+ * Reset to the empty region.
+ *
+ * This frees owned storage. It used to memset and drop the pointers on the
+ * floor, which is fine for a region that never owned anything but silently
+ * leaks the span arena of every region that did -- and in a window manager
+ * that resets accumulated damage once a frame, that is one leak per frame.
+ *
+ * qd_region_copy() deep-copies the span arena, so a copy is independent and
+ * both values are safe to reset in any order. That is why every set operation
+ * may dispose its destination first and then rebuild it in place.
+ */
 void qd_region_init_empty(qd_region_t *r)
 {
-    memset(r, 0, sizeof(*r));
-    r->offsets = NULL;
+    qd_region_dispose(r);
     r->bounds = qd_rect_make(0, 0, 0, 0);
-    r->spans = NULL;
-    r->span_cap = 0;
-    r->owns_storage = false;
+    r->top = 0;
+    r->bottom = 0;
 }
 
 void qd_region_dispose(qd_region_t *r)
@@ -98,8 +108,7 @@ void qd_region_copy(qd_region_t *dst, const qd_region_t *src)
     dst->offsets = (int32_t *)calloc((size_t)nlines + 1, sizeof(int32_t));
     dst->spans = (qd_span_t *)calloc((size_t)total, sizeof(qd_span_t));
     if (dst->offsets == NULL || dst->spans == NULL) {
-        qd_region_dispose(dst);
-        qd_region_init_empty(dst);
+        qd_region_init_empty(dst);   /* frees the half-built allocation */
         return;
     }
     memcpy(dst->offsets, src->offsets, (size_t)(nlines + 1) * sizeof(int32_t));
@@ -317,15 +326,13 @@ static void region_binop(qd_region_t *dst, const qd_region_t *a,
     }
 
     if (total == 0) {
-        qd_region_dispose(dst);
-        qd_region_init_empty(dst);
+        qd_region_init_empty(dst);   /* frees dst->offsets from the sizing pass */
         return;
     }
 
     dst->spans = (qd_span_t *)calloc((size_t)total, sizeof(qd_span_t));
     if (dst->spans == NULL) {
-        qd_region_dispose(dst);
-        qd_region_init_empty(dst);
+        qd_region_init_empty(dst);   /* frees dst->offsets from the sizing pass */
         return;
     }
     dst->span_cap = total;
@@ -421,9 +428,16 @@ void qd_region_offset(qd_region_t *r, int16_t dh, int16_t dv)
 
 void qd_region_invert(qd_region_t *r, qd_rect_t bounds)
 {
-    qd_region_rect_t full, res;
+    qd_region_rect_t full, res = { 0 };
     qd_region_init_rect(&full, bounds);
     qd_region_xor(&res.reg, r, &full.reg);
+    /*
+     * Move, not free-then-assign: qd_region_xor() deep-copies into res.reg, so
+     * r and res.reg never share an arena and discarding r's storage here is
+     * safe. Disposing r first used to be fine only because disposing leaked;
+     * now that it frees, note the order matters -- dispose must come before
+     * the struct is overwritten, never after.
+     */
     qd_region_dispose(r);
     *r = res.reg;
 }

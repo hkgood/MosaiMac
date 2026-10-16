@@ -1,5 +1,7 @@
 # Host build
 /build/
+/sim/build/
+sim/**/*.o
 *.o
 /test/test_qd
 /test/test_window

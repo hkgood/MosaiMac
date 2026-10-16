@@ -26,9 +26,19 @@
 make test     # 1509 + 1615 checks
 make bench    # 吞吐测量
 make asan     # ASan + UBSan
+make sim      # 无头模拟器，60 步拖动逐像素校验
+make sim-asan # 同上，ASan + UBSan + LeakSan
 make render   # 重新生成静态截图
 make replay   # 重新生成上面的拖动动画
 ```
+
+**macOS 模拟器** — 零依赖，用系统自带 Cocoa
+
+```sh
+make app && open build/MosaiMac.app
+```
+
+拖窗口就能看。和固件共用 `src/*.c`，不是另写一份。
 
 **ESP32-S31**
 
@@ -48,6 +58,8 @@ idf.py build flash monitor
 | | |
 |---|---|
 | ROP / CopyBits / Region / GrafPort / 脏矩形回路 | ✅ 主机测试覆盖，3124 checks，ASan + UBSan 干净 |
+| 窗口管理器（拖动 + 损伤回路） | ✅ 主机测试 + 模拟器逐像素校验 |
+| macOS 模拟器 | ✅ `make app`，零依赖；本机无 macOS，未实际运行过 |
 | ESP-IDF 平台层（CO5300 + CST9220 + 推送） | ✅ 编译通过 |
 | `.irisfw` 打包 | ✅ **产出 bundle**，237.7 KB |
 | 上机安装与验证 | ❌ 没有硬件 |
@@ -84,6 +96,7 @@ include/qd/qd.h      公开 API
 src/                 引擎（可移植 C11）
 test/                主机测试
 bench/               吞吐测量
+sim/                 模拟器：核心 + headless + Cocoa 后端 + .app 打包
 tools/               渲染器、字体、PPM→PNG、API 推送
 platform/esp32s31/   ESP-IDF 工程
 docs/                设计文档 + GitHub Pages

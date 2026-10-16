@@ -50,6 +50,22 @@ extern "C" {
  * 8 B * height and nothing else. QD_BSP_ROW_SLACK in the platform layer is
  * the same number.
  */
+/*
+ * Which bit is which colour. 1 = the 1984 look (bit 1 black on white); 0 = the
+ * dark theme, which on an AMOLED lights far fewer pixels.
+ *
+ * Public, because anything that reads back pixels -- the tests, the render
+ * tools, the simulator's own verification -- has to interpret them the same way
+ * the panel does.
+ * They assert pixel values, and a test that hard-codes one mapping breaks the
+ * moment the other is chosen -- which is exactly what happened: flipping the
+ * default produced 1368 failures in a file that does not even test colour
+ * choice.
+ */
+#ifndef QD_INVERT
+#define QD_INVERT 1
+#endif
+
 #define QD_ROW_SLACK 8
 
 /*

@@ -9,10 +9,15 @@ CFLAGS  ?= -O2 -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Wshadow -Wconve
            -Wno-sign-conversion -Iinclude
 LDFLAGS ?=
 
-CORE_SRC := src/qd_rop.c src/qd_region.c src/qd_expand.c
+CORE_SRC := src/qd_rop.c src/qd_region.c src/qd_expand.c src/qd_win.c
 CORE_OBJ := $(CORE_SRC:.c=.o)
 
-.PHONY: all test bench clean asan render replay
+# Header dependencies. Without these, editing a header leaves stale .o files
+# in place and the tests keep reporting failures that no longer exist -- or,
+# worse, keep passing after a behaviour change. Both directions have bitten.
+HEADERS := $(wildcard include/qd/*.h) src/qd_internal.h
+
+.PHONY: all test bench clean asan render replay sim sim-app sim-asan app
 
 all: test bench
 
@@ -48,16 +53,52 @@ build/replay: tools/replay.c tools/font5x7.c tools/font5x7.h $(CORE_SRC)
 	@mkdir -p build
 	$(CC) $(CFLAGS) -Itools -o $@ tools/replay.c tools/font5x7.c $(CORE_SRC)
 
-test/test_qd: test/test_qd.c $(CORE_OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+# --- simulator ----------------------------------------------------------
+#
+# The simulator runs the same core sources as the firmware, so a window drag
+# can be iterated on at 60 fps on a Mac instead of at flash-and-pray speed.
 
-test/test_window: test/test_window.c $(CORE_OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+SIM_SRC := sim/sim_core.c tools/font5x7.c $(CORE_SRC)
 
-bench/bench_qd: bench/bench_qd.c $(CORE_OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+build/sim_headless: sim/sim_headless.c $(SIM_SRC) $(HEADERS)
+	@mkdir -p build
+	$(CC) $(CFLAGS) -Isim -Itools -o $@ sim/sim_headless.c $(SIM_SRC)
 
-%.o: %.c
+# Every pixel of every frame is compared against an independent full repaint,
+# so this is a test target, not a demo.
+sim: build/sim_headless
+	@rm -rf build/sim_frames
+	./build/sim_headless build/sim_frames 60
+
+build/sim_asan: sim/sim_headless.c $(SIM_SRC) $(HEADERS)
+	@mkdir -p build
+	$(CC) $(CFLAGS) -fsanitize=address,undefined -Isim -Itools \
+	      -o $@ sim/sim_headless.c $(SIM_SRC)
+	ASAN_OPTIONS=detect_leaks=1 ./$@ build/asan_frames 60
+
+sim-asan: build/sim_asan
+	@true   # the recipe above already ran and verified
+
+build/sim_cocoa: sim/sim_cocoa.m sim/sim_core.c $(CORE_SRC) $(HEADERS)
+	@mkdir -p build
+	$(CC) $(CFLAGS) -Isim -Itools -framework Cocoa -o $@ \
+	      sim/sim_cocoa.m sim/sim_core.c $(CORE_SRC)
+
+sim-app: build/sim_cocoa
+
+app:
+	@sim/make_app.sh
+
+test/test_qd: test/test_qd.c $(CORE_OBJ) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ test/test_qd.c $(CORE_OBJ) $(LDFLAGS)
+
+test/test_window: test/test_window.c $(CORE_OBJ) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ test/test_window.c $(CORE_OBJ) $(LDFLAGS)
+
+bench/bench_qd: bench/bench_qd.c $(CORE_OBJ) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ bench/bench_qd.c $(CORE_OBJ) $(LDFLAGS)
+
+%.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Sanitised run: the ROP engine does a lot of pointer arithmetic and region

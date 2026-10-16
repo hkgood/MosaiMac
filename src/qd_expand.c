@@ -6,18 +6,24 @@
  * two bytes per input bit, so the arithmetic is free and the only thing that
  * matters is not doing anything silly per pixel.
  *
- * Bit 1 renders as white, bit 0 as black, which gives the 1984 look. Flip
- * QD_INVERT for a dark theme -- on an AMOLED that is the difference between
- * the screen being the power hog and the screen being nearly free.
+ * Which end of the panel is "on" is a display decision, not a graphics one,
+ * and the default is deliberately the 1984 one: bit 1 is black, bit 0 is
+ * white, so a cleared screen is a white page with black text and rules --
+ * what every QuickDraw screenshot looks like.
+ *
+ * Define QD_INVERT=0 for the dark theme. On an AMOLED that is a real
+ * difference: an inverted screen lights far fewer pixels and is nearly free,
+ * where the 1984 look makes the screen itself the power hog. Both are
+ * correct, they are just not the same picture, so it is a build-time choice
+ * rather than a per-call one.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "qd_internal.h"
 
-#ifndef QD_INVERT
-#define QD_INVERT 0
-#endif
+/* QD_INVERT now lives in src/qd_internal.h: tests and tools have to be able to
+ * see it, because they assert the resulting colours. */
 
 /* Reverse the bit order of a byte. Our bitmaps are MSB-first (bit 7 is the
  * leftmost pixel) but the spread trick below consumes bit 0 first. */
