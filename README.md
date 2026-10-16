@@ -61,16 +61,16 @@ idf.py build flash monitor
 | 窗口管理器（拖动 + 损伤回路） | ✅ 主机测试 + 模拟器逐像素校验 |
 | macOS 模拟器 | ✅ `make app`，零依赖；本机无 macOS，未实际运行过 |
 | ESP-IDF 平台层（CO5300 + CST9220 + 推送） | ✅ 编译通过 |
-| `.irisfw` 打包 | ✅ **产出 bundle**，237.7 KB |
+| `.irisfw` 打包 | ✅ **产出 bundle**，238.7 KB |
 | 上机安装与验证 | ❌ 没有硬件 |
 
 在 [esp-mosaico-vibe](https://github.com/esp-mosaico/esp-mosaico-vibe) 工作区里用 `mosaico.py iris system-update` 打出：
 
 ```
-qd_esp32s31-system-update.irisfw    237.7 KB
+qd_esp32s31-system-update.irisfw    238.7 KB
   manifest.json         esp-iris-system-update/0.2
   partition-table.bin   4 KB
-  ota_0.bin             466 KB
+  ota_0.bin             456.5 KB
 ```
 
 编译环境：ESP-IDF **v6.2.0**（master @ `7b9cc1ac`，和 workspace 钉的同一 commit），target `esp32s31`，16 MB flash。

@@ -49,16 +49,16 @@ Board bring-up uses `bsp_display_new()` / `bsp_touch_new()` from [esp-mosaico-bs
 |---|---|
 | ROP / CopyBits / Region / GrafPort / dirty-rect loop | done -- 3,124 host checks, ASan + UBSan clean |
 | ESP-IDF platform layer (CO5300 + CST9220 + push) | compiles |
-| `.irisfw` bundle | **produced**, 237.7 KB |
+| `.irisfw` bundle | **produced**, 238.7 KB |
 | Installed and verified on hardware | no -- there is no board here |
 
 Built in the [esp-mosaico-vibe](https://github.com/esp-mosaico/esp-mosaico-vibe) workspace with `mosaico.py iris system-update`:
 
 ```
-qd_esp32s31-system-update.irisfw    237.7 KB
+qd_esp32s31-system-update.irisfw    238.7 KB
   manifest.json         esp-iris-system-update/0.2
   partition-table.bin   4 KB
-  ota_0.bin             466 KB
+  ota_0.bin             456.5 KB
 ```
 
 ESP-IDF **v6.2.0** (master @ `7b9cc1ac`, the commit the workspace pins), target `esp32s31`, 16 MB flash.
